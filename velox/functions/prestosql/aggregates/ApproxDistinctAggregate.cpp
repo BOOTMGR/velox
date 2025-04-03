@@ -443,12 +443,18 @@ exec::AggregateRegistrationResult registerApproxDistinct(
     bool withCompanionFunctions,
     bool overwrite,
     double defaultError) {
+
   auto returnType = hllAsFinalResult ? "hyperloglog" : "bigint";
 
   std::vector<std::shared_ptr<exec::AggregateFunctionSignature>> signatures;
   if (hllAsRawInput) {
     signatures.push_back(exec::AggregateFunctionSignatureBuilder()
                              .returnType(returnType)
+                             .intermediateType("varbinary")
+                             .argumentType("hyperloglog")
+                             .build());
+    signatures.push_back(exec::AggregateFunctionSignatureBuilder()
+                             .returnType("varbinary")
                              .intermediateType("varbinary")
                              .argumentType("hyperloglog")
                              .build());
@@ -476,6 +482,19 @@ exec::AggregateRegistrationResult registerApproxDistinct(
 
       signatures.push_back(exec::AggregateFunctionSignatureBuilder()
                                .returnType(returnType)
+                               .intermediateType("varbinary")
+                               .argumentType(inputType)
+                               .argumentType("double")
+                               .build());
+
+      signatures.push_back(exec::AggregateFunctionSignatureBuilder()
+                               .returnType("varbinary")
+                               .intermediateType("varbinary")
+                               .argumentType(inputType)
+                               .build());
+
+      signatures.push_back(exec::AggregateFunctionSignatureBuilder()
+                               .returnType("varbinary")
                                .intermediateType("varbinary")
                                .argumentType(inputType)
                                .argumentType("double")
@@ -543,14 +562,14 @@ void registerApproxDistinctAggregates(
       prefix + kApproxSet,
       true,
       false,
-      false,
+      withCompanionFunctions,
       overwrite,
       common::hll::kDefaultApproxSetStandardError);
   registerApproxDistinct(
       prefix + kMerge,
       true,
       true,
-      false,
+      withCompanionFunctions,
       overwrite,
       common::hll::kDefaultApproxSetStandardError);
 }

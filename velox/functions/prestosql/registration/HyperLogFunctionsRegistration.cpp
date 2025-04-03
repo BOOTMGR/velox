@@ -16,13 +16,18 @@
 #include "velox/functions/Registerer.h"
 #include "velox/functions/prestosql/HyperLogLogFunctions.h"
 #include "velox/functions/prestosql/types/HyperLogLogRegistration.h"
+#include <glog/logging.h>
 
 namespace facebook::velox::functions {
 
 void registerHyperLogFunctions(const std::string& prefix) {
   registerHyperLogLogType();
 
+  LOG(ERROR) << "Registering HyperLogLog functions with prefix: " << prefix;
+
   registerFunction<CardinalityFunction, int64_t, HyperLogLog>(
+      {prefix + "cardinality"});
+  registerFunction<CardinalityFunctionBinary, int64_t, Varbinary>(
       {prefix + "cardinality"});
 
   registerFunction<

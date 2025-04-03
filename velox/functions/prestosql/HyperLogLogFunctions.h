@@ -43,6 +43,25 @@ struct CardinalityFunction {
 };
 
 template <typename T>
+struct CardinalityFunctionBinary {
+  VELOX_DEFINE_FUNCTION_TYPES(T);
+
+  FOLLY_ALWAYS_INLINE bool call(
+      int64_t& result,
+      const arg_type<Varbinary>& hll) {
+    using common::hll::DenseHll;
+    using common::hll::SparseHll;
+
+    if (SparseHll::canDeserialize(hll.data())) {
+      result = SparseHll::cardinality(hll.data());
+    } else {
+      result = DenseHll::cardinality(hll.data());
+    }
+    return true;
+  }
+};
+
+template <typename T>
 struct EmptyApproxSetFunction {
   VELOX_DEFINE_FUNCTION_TYPES(T);
 
