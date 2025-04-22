@@ -708,6 +708,11 @@ static void __parse_zone(
   } while (std::isdigit(__input.peek()) || __input.peek() == '-');
 
   std::filesystem::path __root = __libcpp_tzdb_directory();
+  // https://github.com/facebookincubator/velox/pull/12722
+  if (!std::filesystem::exists(__root/ __p->__name())) {
+    // in case the zonefile does not exists
+    return;
+  }
   std::ifstream zone_file{__root / __p->__name()};
   date::populate_transitions(__p->transitions(), __p->ttinfos(), zone_file);
 
@@ -834,7 +839,13 @@ static void __parse_leap_seconds(
 
 void __init_tzdb(tzdb& __tzdb, __rules_storage_type& __rules) {
   std::filesystem::path __root = __libcpp_tzdb_directory();
-  std::ifstream __tzdata{__root / "tzdata.zi"};
+  // std::ifstream __tzdata{__root / "tzdata.zi"};
+  std::ifstream __tzdata{"tzdata.zi"};
+  if (!__tzdata) {
+    auto __cwd = std::filesystem::current_path();
+    std::__throw_runtime_error(
+        fmt::format("tzdb: the file 'tzdata.zi' is not found in the current directory '{}'", __cwd.string()).c_str());
+  }
 
   __tzdb.version = __parse_version(__tzdata);
   __parse_tzdata(__tzdb, __rules, __tzdata);
@@ -941,7 +952,13 @@ const tzdb& reload_tzdb() {
 
 std::string remote_version() {
   std::filesystem::path __root = __libcpp_tzdb_directory();
-  std::ifstream __tzdata{__root / "tzdata.zi"};
+  // std::ifstream __tzdata{__root / "tzdata.zi"};
+  std::ifstream __tzdata{"tzdata.zi"};
+  if (!__tzdata) {
+    auto __cwd = std::filesystem::current_path();
+    std::__throw_runtime_error(
+        fmt::format("tzdb-remote: the file 'tzdata.zi' is not found in the current directory '{}'", __cwd.string()).c_str());
+  }
   return __parse_version(__tzdata);
 }
 
